@@ -6,7 +6,10 @@ export async function POST(req: NextRequest) {
   try {
     const { email, password, name } = await req.json()
 
-    if (!email || !password) {
+    // Normalize email to lowercase
+    const normalizedEmail = email?.toLowerCase().trim()
+
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
         { status: 400 }
@@ -21,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     })
 
     if (existingUser) {
@@ -35,9 +38,9 @@ export async function POST(req: NextRequest) {
 
     const user = await db.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
-        name: name || email.split("@")[0],
+        name: name || normalizedEmail.split("@")[0],
         plan: "free",
         role: "student",
       },

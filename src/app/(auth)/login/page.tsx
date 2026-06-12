@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -72,20 +72,35 @@ export default function LoginPage() {
 
     try {
       const result = await signIn('credentials', {
-        email,
+        email: email.trim().toLowerCase(),
         password,
         redirect: false,
       })
 
       if (result?.error) {
+        console.error('Login error:', result.error)
         setError(result.error === 'CredentialsSignin'
           ? 'Invalid email or password'
           : result.error)
       } else if (result?.ok) {
-        // Wait a moment for session to be established
-        await new Promise((resolve) => setTimeout(resolve, 300))
-        router.push('/dashboard')
-        router.refresh()
+        // Poll for session to be established (max 5 attempts)
+        let sessionEstablished = false
+        for (let i = 0; i < 5; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 400))
+          const session = await getSession()
+          if (session) {
+            sessionEstablished = true
+            break
+          }
+        }
+
+        if (sessionEstablished) {
+          router.push('/dashboard')
+          router.refresh()
+        } else {
+          // Force a page reload to pick up the session cookie
+          window.location.href = '/dashboard'
+        }
       } else {
         setError('Sign in failed. Please try again.')
       }

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -103,30 +103,53 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase(), password }),
       })
 
       const data = await res.json()
 
       if (data.error) {
         setError(data.error)
-      } else {
-        // Auto sign-in after successful registration
+        setIsLoading(false)
+        return
+      }
+
+      // Auto sign-in after successful registration
+      try {
         const signInResult = await signIn('credentials', {
-          email,
+          email: email.trim().toLowerCase(),
           password,
           redirect: false,
         })
 
         if (signInResult?.error) {
-          // Registration succeeded but auto sign-in failed - redirect to login
+          // Registration succeeded but auto sign-in failed - redirect to login with message
+          console.error('Auto sign-in failed after registration:', signInResult.error)
           router.push('/login?registered=true')
-        } else {
-          // Wait a moment for session to be established
+          return
+        }
+
+        // Poll for session to be established (max 5 attempts, 500ms each)
+        let sessionEstablished = false
+        for (let i = 0; i < 5; i++) {
           await new Promise((resolve) => setTimeout(resolve, 500))
+          const session = await getSession()
+          if (session) {
+            sessionEstablished = true
+            break
+          }
+        }
+
+        if (sessionEstablished) {
           router.push('/dashboard')
           router.refresh()
+        } else {
+          // Session not yet established, redirect to login
+          router.push('/login?registered=true')
         }
+      } catch (signInError) {
+        console.error('Sign-in exception after registration:', signInError)
+        router.push('/login?registered=true')
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')

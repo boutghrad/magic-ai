@@ -149,13 +149,13 @@ export default function DashboardLayout({
     () => false
   )
 
-  // Redirect to login if unauthenticated (but allow demo mode)
+  // Redirect to login if unauthenticated (with longer delay to allow session establishment)
   useEffect(() => {
     if (status === 'unauthenticated') {
-      // Small delay to avoid flash redirect on initial load
+      // Longer delay to avoid redirecting before session cookie is set
       const timer = setTimeout(() => {
         router.push('/login')
-      }, 500)
+      }, 2000)
       return () => clearTimeout(timer)
     }
   }, [status, router])

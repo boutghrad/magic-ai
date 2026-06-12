@@ -14,23 +14,32 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error("Auth: Missing email or password")
           return null
         }
 
         try {
           const user = await db.user.findUnique({
-            where: { email: credentials.email },
+            where: { email: credentials.email.toLowerCase().trim() },
           })
 
-          if (!user || !user.password) {
+          if (!user) {
+            console.error("Auth: No user found for email:", credentials.email)
+            return null
+          }
+
+          if (!user.password) {
+            console.error("Auth: User has no password set (OAuth user?):", credentials.email)
             return null
           }
 
           const isValid = await compare(credentials.password, user.password)
           if (!isValid) {
+            console.error("Auth: Invalid password for:", credentials.email)
             return null
           }
 
+          console.log("Auth: Successfully authenticated:", credentials.email)
           return {
             id: user.id,
             email: user.email,
@@ -40,7 +49,7 @@ export const authOptions: NextAuthOptions = {
             image: user.image,
           }
         } catch (error) {
-          console.error("Auth error:", error)
+          console.error("Auth error (database/connection issue):", error)
           return null
         }
       },
@@ -98,5 +107,6 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
+  secret: process.env.NEXTAUTH_SECRET || "magic-ai-super-secret-key-2024-production-ready",
 }

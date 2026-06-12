@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -152,9 +152,32 @@ export default function DashboardLayout({
   // Redirect to login if unauthenticated (but allow demo mode)
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login')
+      // Small delay to avoid flash redirect on initial load
+      const timer = setTimeout(() => {
+        router.push('/login')
+      }, 500)
+      return () => clearTimeout(timer)
     }
   }, [status, router])
+
+  // Show loading state while session is being checked
+  if (status === 'loading') {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 rounded-xl magic-gradient flex items-center justify-center animate-pulse">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+            <div className="h-2 w-2 rounded-full bg-primary animate-bounce" />
+          </div>
+          <p className="text-sm text-muted-foreground">Loading Magic AI...</p>
+        </div>
+      </div>
+    )
+  }
 
   const userName = session?.user?.name || 'Student'
   const userEmail = session?.user?.email || 'student@magicai.com'
@@ -442,7 +465,8 @@ export default function DashboardLayout({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive"
-                    onClick={() => {
+                    onClick={async () => {
+                      await signOut({ redirect: false })
                       router.push('/login')
                     }}
                   >

@@ -111,8 +111,22 @@ export default function RegisterPage() {
       if (data.error) {
         setError(data.error)
       } else {
-        await signIn('credentials', { email, password, redirect: false })
-        router.push('/dashboard')
+        // Auto sign-in after successful registration
+        const signInResult = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        })
+
+        if (signInResult?.error) {
+          // Registration succeeded but auto sign-in failed - redirect to login
+          router.push('/login?registered=true')
+        } else {
+          // Wait a moment for session to be established
+          await new Promise((resolve) => setTimeout(resolve, 500))
+          router.push('/dashboard')
+          router.refresh()
+        }
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')

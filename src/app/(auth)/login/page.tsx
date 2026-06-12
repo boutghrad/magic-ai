@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
@@ -15,6 +15,7 @@ import {
   Chrome,
   Loader2,
   AlertCircle,
+  CheckCircle2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -37,6 +38,15 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  // Show success message if redirected from registration
+  const [successMessage, setSuccessMessage] = useState('')
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('registered') === 'true') {
+      setSuccessMessage('Account created successfully! Please sign in.')
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,8 +81,13 @@ export default function LoginPage() {
         setError(result.error === 'CredentialsSignin'
           ? 'Invalid email or password'
           : result.error)
-      } else {
+      } else if (result?.ok) {
+        // Wait a moment for session to be established
+        await new Promise((resolve) => setTimeout(resolve, 300))
         router.push('/dashboard')
+        router.refresh()
+      } else {
+        setError('Sign in failed. Please try again.')
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')
@@ -149,6 +164,16 @@ export default function LoginPage() {
 
           <CardContent className="space-y-5">
             {/* Error Display */}
+            {successMessage && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{successMessage}</span>
+              </motion.div>
+            )}
             {error && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}

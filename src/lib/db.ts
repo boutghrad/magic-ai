@@ -17,6 +17,7 @@ const prismaClientOptions = {
       url: DATABASE_URL,
     },
   },
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 }
 
 export const db = globalForPrisma.prisma ?? new PrismaClient(prismaClientOptions)

@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -49,17 +49,6 @@ export default function LoginPage() {
     }
   }, [])
 
-  // Helper: Wait for session to be established after signIn
-  const waitForSession = async (): Promise<boolean> => {
-    // Poll getSession() up to 10 times with 300ms intervals
-    for (let i = 0; i < 10; i++) {
-      const session = await getSession()
-      if (session) return true
-      await new Promise((resolve) => setTimeout(resolve, 300))
-    }
-    return false
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -95,19 +84,12 @@ export default function LoginPage() {
           : result.error)
         setIsLoading(false)
       } else if (result?.ok) {
-        // Wait for session to be fully established before navigating
-        const sessionEstablished = await waitForSession()
-
-        if (sessionEstablished) {
-          // Use full page reload to ensure middleware picks up the new session cookie
-          // This avoids the race condition where client-side useSession() returns
-          // unauthenticated before the cookie is fully propagated
-          window.location.href = '/dashboard'
-        } else {
-          // Session not confirmed via polling, but signIn returned ok
-          // Use full page reload as fallback - the cookie should be set
-          window.location.href = '/dashboard'
-        }
+        // Brief delay to ensure the session cookie is fully set in the browser
+        // before navigating. The dashboard layout uses server-side getServerSession()
+        // which reads the JWT directly from cookies, so a full page reload is the
+        // most reliable way to ensure the cookie is picked up.
+        await new Promise((resolve) => setTimeout(resolve, 300))
+        window.location.href = '/dashboard'
       } else {
         setError('Sign in failed. Please try again.')
         setIsLoading(false)

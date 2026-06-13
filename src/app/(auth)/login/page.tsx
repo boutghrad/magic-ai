@@ -99,8 +99,10 @@ export default function LoginPage() {
         const sessionEstablished = await waitForSession()
 
         if (sessionEstablished) {
-          // Session confirmed - use router.push for client navigation
-          router.push('/dashboard')
+          // Use full page reload to ensure middleware picks up the new session cookie
+          // This avoids the race condition where client-side useSession() returns
+          // unauthenticated before the cookie is fully propagated
+          window.location.href = '/dashboard'
         } else {
           // Session not confirmed via polling, but signIn returned ok
           // Use full page reload as fallback - the cookie should be set

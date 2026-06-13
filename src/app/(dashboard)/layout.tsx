@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession, signOut, getSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -148,28 +148,30 @@ export default function DashboardLayout({
     () => false
   )
 
-  // Wait for session to resolve, then handle auth state
-  // We do NOT redirect immediately - we wait for session to fully load first
+  // Auth guard: redirect to login only after session is confirmed unauthenticated
+  // Middleware handles the primary auth check, so this is a client-side fallback
+  // We use a longer delay to avoid race conditions with session cookie propagation
   useEffect(() => {
-    // Only act after session status is no longer loading
     if (status === 'loading') return
 
     setSessionCheckDone(true)
 
-    // If session is confirmed unauthenticated after loading is done,
-    // redirect to login. But use a small delay to avoid race conditions
-    // with middleware and cookie setting.
     if (status === 'unauthenticated') {
+      // Give more time for the session cookie to propagate after login
+      // This prevents the redirect loop that was happening before
       const timer = setTimeout(() => {
-        router.replace('/login')
-      }, 300)
+        // Double-check session one more time before redirecting
+        getSession().then((session) => {
+          if (!session) {
+            router.replace('/login')
+          }
+        })
+      }, 1000)
       return () => clearTimeout(timer)
     }
   }, [status, router])
 
   // Show loading state while session is being checked
-  // This is the critical fix: we wait for session to fully resolve
-  // before showing anything, and we never redirect during loading
   if (status === 'loading' || !sessionCheckDone) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -188,7 +190,7 @@ export default function DashboardLayout({
     )
   }
 
-  // If unauthenticated after loading, show redirecting state (not a flash of content)
+  // If unauthenticated after loading, show redirecting state
   if (status === 'unauthenticated') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">

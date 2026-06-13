@@ -1,0 +1,650 @@
+     1→'use client'
+     2→
+     3→import { useState } from 'react'
+     4→import { motion, AnimatePresence } from 'framer-motion'
+     5→import {
+     6→  Brain,
+     7→  Loader2,
+     8→  Sparkles,
+     9→  CheckCircle2,
+    10→  XCircle,
+    11→  ChevronRight,
+    12→  RotateCcw,
+    13→  Trophy,
+    14→} from 'lucide-react'
+    15→import {
+    16→  Card,
+    17→  CardContent,
+    18→  CardDescription,
+    19→  CardHeader,
+    20→  CardTitle,
+    21→} from '@/components/ui/card'
+    22→import { Button } from '@/components/ui/button'
+    23→import { Input } from '@/components/ui/input'
+    24→import { Slider } from '@/components/ui/slider'
+    25→import { Checkbox } from '@/components/ui/checkbox'
+    26→import { Label } from '@/components/ui/label'
+    27→import { Badge } from '@/components/ui/badge'
+    28→import { Progress } from '@/components/ui/progress'
+    29→import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+    30→import { Separator } from '@/components/ui/separator'
+    31→import { toast } from 'sonner'
+    32→
+    33→const difficulties = [
+    34→  { value: 'easy', label: 'Easy', description: 'Basic concepts' },
+    35→  { value: 'medium', label: 'Medium', description: 'Intermediate level' },
+    36→  { value: 'hard', label: 'Hard', description: 'Advanced problems' },
+    37→]
+    38→
+    39→const questionTypeOptions = [
+    40→  { id: 'multiple_choice', label: 'Multiple Choice' },
+    41→  { id: 'true_false', label: 'True / False' },
+    42→  { id: 'open_ended', label: 'Open-ended' },
+    43→]
+    44→
+    45→interface QuizQuestion {
+    46→  id: number
+    47→  type: string
+    48→  question: string
+    49→  options?: string[]
+    50→  answer: string
+    51→  explanation: string
+    52→}
+    53→
+    54→interface QuizData {
+    55→  title: string
+    56→  questions: QuizQuestion[]
+    57→  raw?: string
+    58→}
+    59→
+    60→export default function QuizGeneratorPage() {
+    61→  const [topic, setTopic] = useState('')
+    62→  const [numQuestions, setNumQuestions] = useState([5])
+    63→  const [difficulty, setDifficulty] = useState('medium')
+    64→  const [selectedTypes, setSelectedTypes] = useState<string[]>([
+    65→    'multiple_choice',
+    66→    'true_false',
+    67→  ])
+    68→  const [loading, setLoading] = useState(false)
+    69→  const [quiz, setQuiz] = useState<QuizData | null>(null)
+    70→  const [currentQuestion, setCurrentQuestion] = useState(0)
+    71→  const [answers, setAnswers] = useState<Record<number, string>>({})
+    72→  const [showResults, setShowResults] = useState(false)
+    73→  const [showExplanation, setShowExplanation] = useState<Record<number, boolean>>({})
+    74→
+    75→  const toggleType = (type: string) => {
+    76→    setSelectedTypes((prev) =>
+    77→      prev.includes(type)
+    78→        ? prev.filter((t) => t !== type)
+    79→        : [...prev, type]
+    80→    )
+    81→  }
+    82→
+    83→  const handleGenerate = async () => {
+    84→    if (!topic.trim()) {
+    85→      toast.error('Please enter a topic')
+    86→      return
+    87→    }
+    88→    if (selectedTypes.length === 0) {
+    89→      toast.error('Select at least one question type')
+    90→      return
+    91→    }
+    92→    setLoading(true)
+    93→    setQuiz(null)
+    94→    setCurrentQuestion(0)
+    95→    setAnswers({})
+    96→    setShowResults(false)
+    97→    setShowExplanation({})
+    98→    try {
+    99→      const res = await fetch('/api/ai/quiz', {
+   100→        method: 'POST',
+   101→        headers: { 'Content-Type': 'application/json' },
+   102→        body: JSON.stringify({
+   103→          topic,
+   104→          numQuestions: numQuestions[0],
+   105→          difficulty,
+   106→          questionTypes: selectedTypes,
+   107→        }),
+   108→      })
+   109→      const data = await res.json()
+   110→      if (data.error) {
+   111→        toast.error(data.error)
+   112→        return
+   113→      }
+   114→      setQuiz(data.quiz)
+   115→      toast.success('Quiz generated!')
+   116→    } catch {
+   117→      toast.error('Failed to generate quiz. Please try again.')
+   118→    } finally {
+   119→      setLoading(false)
+   120→    }
+   121→  }
+   122→
+   123→  const handleAnswer = (questionId: number, answer: string) => {
+   124→    setAnswers((prev) => ({ ...prev, [questionId]: answer }))
+   125→  }
+   126→
+   127→  const getScore = () => {
+   128→    if (!quiz?.questions) return 0
+   129→    return quiz.questions.reduce((score, q) => {
+   130→      const userAnswer = answers[q.id]
+   131→      if (!userAnswer) return score
+   132→      const correct = q.answer.toLowerCase().trim()
+   133→      const given = userAnswer.toLowerCase().trim()
+   134→      // Handle both "A" and "A) Option" style answers
+   135→      if (correct === given || given.startsWith(correct)) return score + 1
+   136→      // For true/false
+   137→      if (
+   138→        (correct === 'true' && given === 'true') ||
+   139→        (correct === 'false' && given === 'false')
+   140→      )
+   141→        return score + 1
+   142→      return score
+   143→    }, 0)
+   144→  }
+   145→
+   146→  const isCorrectAnswer = (question: QuizQuestion) => {
+   147→    const userAnswer = answers[question.id]
+   148→    if (!userAnswer) return null
+   149→    const correct = question.answer.toLowerCase().trim()
+   150→    const given = userAnswer.toLowerCase().trim()
+   151→    if (correct === given || given.startsWith(correct)) return true
+   152→    if (
+   153→      (correct === 'true' && given === 'true') ||
+   154→      (correct === 'false' && given === 'false')
+   155→    )
+   156→      return true
+   157→    return false
+   158→  }
+   159→
+   160→  const resetQuiz = () => {
+   161→    setQuiz(null)
+   162→    setCurrentQuestion(0)
+   163→    setAnswers({})
+   164→    setShowResults(false)
+   165→    setShowExplanation({})
+   166→  }
+   167→
+   168→  return (
+   169→    <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">
+   170→      <motion.div
+   171→        initial={{ opacity: 0, y: 20 }}
+   172→        animate={{ opacity: 1, y: 0 }}
+   173→        transition={{ duration: 0.4 }}
+   174→        className="space-y-6"
+   175→      >
+   176→        {/* Header */}
+   177→        <div className="flex items-center gap-3">
+   178→          <div className="rounded-xl bg-primary/10 p-3">
+   179→            <Brain className="text-primary" size={24} />
+   180→          </div>
+   181→          <div>
+   182→            <h1 className="text-2xl font-bold">Quiz Generator</h1>
+   183→            <p className="text-muted-foreground text-sm">
+   184→              Create custom quizzes on any topic
+   185→            </p>
+   186→          </div>
+   187→        </div>
+   188→
+   189→        {!quiz ? (
+   190→          /* Quiz Configuration */
+   191→          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+   192→            <div className="lg:col-span-2">
+   193→              <Card className="border-0 shadow-md">
+   194→                <CardHeader className="pb-3">
+   195→                  <CardTitle className="text-base">Configure Your Quiz</CardTitle>
+   196→                  <CardDescription>
+   197→                    Customize your quiz settings
+   198→                  </CardDescription>
+   199→                </CardHeader>
+   200→                <CardContent className="space-y-6">
+   201→                  {/* Topic */}
+   202→                  <div className="space-y-2">
+   203→                    <Label className="text-sm font-medium">Topic</Label>
+   204→                    <Input
+   205→                      placeholder="e.g., Newton's Laws, World War II, Python Basics..."
+   206→                      value={topic}
+   207→                      onChange={(e) => setTopic(e.target.value)}
+   208→                    />
+   209→                  </div>
+   210→
+   211→                  {/* Number of questions */}
+   212→                  <div className="space-y-3">
+   213→                    <div className="flex items-center justify-between">
+   214→                      <Label className="text-sm font-medium">
+   215→                        Number of Questions
+   216→                      </Label>
+   217→                      <Badge variant="secondary" className="font-mono">
+   218→                        {numQuestions[0]}
+   219→                      </Badge>
+   220→                    </div>
+   221→                    <Slider
+   222→                      value={numQuestions}
+   223→                      onValueChange={setNumQuestions}
+   224→                      min={3}
+   225→                      max={20}
+   226→                      step={1}
+   227→                      className="w-full"
+   228→                    />
+   229→                    <div className="flex justify-between text-xs text-muted-foreground">
+   230→                      <span>3</span>
+   231→                      <span>20</span>
+   232→                    </div>
+   233→                  </div>
+   234→
+   235→                  {/* Difficulty */}
+   236→                  <div className="space-y-2">
+   237→                    <Label className="text-sm font-medium">Difficulty</Label>
+   238→                    <div className="grid grid-cols-3 gap-2">
+   239→                      {difficulties.map((d) => (
+   240→                        <button
+   241→                          key={d.value}
+   242→                          className={`p-3 rounded-lg border-2 text-center transition-all ${
+   243→                            difficulty === d.value
+   244→                              ? 'border-primary bg-primary/10 text-primary'
+   245→                              : 'border-border hover:border-primary/50'
+   246→                          }`}
+   247→                          onClick={() => setDifficulty(d.value)}
+   248→                        >
+   249→                          <p className="text-sm font-medium">{d.label}</p>
+   250→                          <p className="text-[10px] text-muted-foreground mt-0.5">
+   251→                            {d.description}
+   252→                          </p>
+   253→                        </button>
+   254→                      ))}
+   255→                    </div>
+   256→                  </div>
+   257→
+   258→                  {/* Question types */}
+   259→                  <div className="space-y-3">
+   260→                    <Label className="text-sm font-medium">
+   261→                      Question Types
+   262→                    </Label>
+   263→                    <div className="space-y-3">
+   264→                      {questionTypeOptions.map((type) => (
+   265→                        <div
+   266→                          key={type.id}
+   267→                          className="flex items-center space-x-3"
+   268→                        >
+   269→                          <Checkbox
+   270→                            id={type.id}
+   271→                            checked={selectedTypes.includes(type.id)}
+   272→                            onCheckedChange={() => toggleType(type.id)}
+   273→                          />
+   274→                          <Label
+   275→                            htmlFor={type.id}
+   276→                            className="text-sm font-normal cursor-pointer"
+   277→                          >
+   278→                            {type.label}
+   279→                          </Label>
+   280→                        </div>
+   281→                      ))}
+   282→                    </div>
+   283→                  </div>
+   284→
+   285→                  <Button
+   286→                    onClick={handleGenerate}
+   287→                    disabled={loading || !topic.trim() || selectedTypes.length === 0}
+   288→                    className="w-full gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white h-11"
+   289→                    size="lg"
+   290→                  >
+   291→                    {loading ? (
+   292→                      <Loader2 className="animate-spin" size={18} />
+   293→                    ) : (
+   294→                      <Sparkles size={18} />
+   295→                    )}
+   296→                    {loading ? 'Generating...' : 'Generate Quiz'}
+   297→                  </Button>
+   298→                </CardContent>
+   299→              </Card>
+   300→            </div>
+   301→
+   302→            {/* Info sidebar */}
+   303→            <div className="lg:col-span-1">
+   304→              <Card className="border-0 shadow-md">
+   305→                <CardHeader className="pb-3">
+   306→                  <CardTitle className="text-base">How It Works</CardTitle>
+   307→                </CardHeader>
+   308→                <CardContent>
+   309→                  <div className="space-y-4 text-sm text-muted-foreground">
+   310→                    <div className="flex gap-3">
+   311→                      <div className="rounded-full bg-primary/10 w-6 h-6 flex items-center justify-center shrink-0">
+   312→                        <span className="text-primary text-xs font-bold">1</span>
+   313→                      </div>
+   314→                      <p>Enter a topic you want to be quizzed on</p>
+   315→                    </div>
+   316→                    <div className="flex gap-3">
+   317→                      <div className="rounded-full bg-primary/10 w-6 h-6 flex items-center justify-center shrink-0">
+   318→                        <span className="text-primary text-xs font-bold">2</span>
+   319→                      </div>
+   320→                      <p>Adjust difficulty and question types</p>
+   321→                    </div>
+   322→                    <div className="flex gap-3">
+   323→                      <div className="rounded-full bg-primary/10 w-6 h-6 flex items-center justify-center shrink-0">
+   324→                        <span className="text-primary text-xs font-bold">3</span>
+   325→                      </div>
+   326→                      <p>Generate your custom quiz</p>
+   327→                    </div>
+   328→                    <div className="flex gap-3">
+   329→                      <div className="rounded-full bg-primary/10 w-6 h-6 flex items-center justify-center shrink-0">
+   330→                        <span className="text-primary text-xs font-bold">4</span>
+   331→                      </div>
+   332→                      <p>Answer questions and track your score</p>
+   333→                    </div>
+   334→                  </div>
+   335→                </CardContent>
+   336→              </Card>
+   337→            </div>
+   338→          </div>
+   339→        ) : (
+   340→          /* Quiz Display */
+   341→          <div className="space-y-4">
+   342→            {/* Quiz header with progress */}
+   343→            <Card className="border-0 shadow-md">
+   344→              <CardContent className="p-4">
+   345→                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+   346→                  <div>
+   347→                    <h2 className="text-lg font-bold">{quiz.title}</h2>
+   348→                    <p className="text-sm text-muted-foreground">
+   349→                      {quiz.questions.length} questions · {difficulty} difficulty
+   350→                    </p>
+   351→                  </div>
+   352→                  <div className="flex items-center gap-3">
+   353→                    <div className="text-sm font-medium">
+   354→                      {Object.keys(answers).length}/{quiz.questions.length} answered
+   355→                    </div>
+   356→                    <Button variant="outline" size="sm" onClick={resetQuiz}>
+   357→                      <RotateCcw size={14} className="mr-1.5" />
+   358→                      New Quiz
+   359→                    </Button>
+   360→                  </div>
+   361→                </div>
+   362→                <Progress
+   363→                  value={
+   364→                    (Object.keys(answers).length / quiz.questions.length) * 100
+   365→                  }
+   366→                  className="mt-3 h-2"
+   367→                />
+   368→              </CardContent>
+   369→            </Card>
+   370→
+   371→            {/* Questions */}
+   372→            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+   373→              <div className="lg:col-span-3 space-y-4">
+   374→                <AnimatePresence mode="wait">
+   375→                  {quiz.questions.map((q, idx) => {
+   376→                    // Show all questions or current one at a time
+   377→                    if (showResults || idx === currentQuestion) {
+   378→                      return (
+   379→                        <motion.div
+   380→                          key={q.id}
+   381→                          initial={{ opacity: 0, x: 20 }}
+   382→                          animate={{ opacity: 1, x: 0 }}
+   383→                          exit={{ opacity: 0, x: -20 }}
+   384→                          transition={{ duration: 0.3 }}
+   385→                        >
+   386→                          <Card className="border-0 shadow-md">
+   387→                            <CardHeader className="pb-3">
+   388→                              <div className="flex items-start justify-between">
+   389→                                <div className="flex items-center gap-2">
+   390→                                  <Badge variant="secondary">
+   391→                                    Q{idx + 1}
+   392→                                  </Badge>
+   393→                                  <Badge variant="outline" className="text-xs capitalize">
+   394→                                    {q.type.replace('_', ' ')}
+   395→                                  </Badge>
+   396→                                </div>
+   397→                                {showResults && (
+   398→                                  isCorrectAnswer(q) ? (
+   399→                                    <CheckCircle2 className="text-emerald-500" size={20} />
+   400→                                  ) : (
+   401→                                    <XCircle className="text-destructive" size={20} />
+   402→                                  )
+   403→                                )}
+   404→                              </div>
+   405→                              <CardTitle className="text-base mt-2">
+   406→                                {q.question}
+   407→                              </CardTitle>
+   408→                            </CardHeader>
+   409→                            <CardContent className="space-y-3">
+   410→                              {q.type === 'multiple_choice' && q.options ? (
+   411→                                <RadioGroup
+   412→                                  value={answers[q.id] || ''}
+   413→                                  onValueChange={(val) =>
+   414→                                    handleAnswer(q.id, val)
+   415→                                  }
+   416→                                  disabled={showResults}
+   417→                                >
+   418→                                  {q.options.map((opt, optIdx) => {
+   419→                                    const letter = String.fromCharCode(65 + optIdx)
+   420→                                    const isSelected = answers[q.id] === opt
+   421→                                    const isCorrect = q.answer.toLowerCase().startsWith(letter.toLowerCase())
+   422→                                    const showCorrectness = showResults && isCorrect
+   423→
+   424→                                    return (
+   425→                                      <div
+   426→                                        key={optIdx}
+   427→                                        className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+   428→                                          showCorrectness
+   429→                                            ? 'border-emerald-500 bg-emerald-500/10'
+   430→                                            : isSelected && showResults
+   431→                                            ? 'border-destructive bg-destructive/10'
+   432→                                            : isSelected
+   433→                                            ? 'border-primary bg-primary/5'
+   434→                                            : 'border-border hover:border-primary/50'
+   435→                                        }`}
+   436→                                      >
+   437→                                        <RadioGroupItem
+   438→                                          value={opt}
+   439→                                          id={`${q.id}-${optIdx}`}
+   440→                                        />
+   441→                                        <Label
+   442→                                          htmlFor={`${q.id}-${optIdx}`}
+   443→                                          className="flex-1 cursor-pointer text-sm"
+   444→                                        >
+   445→                                          {opt}
+   446→                                        </Label>
+   447→                                      </div>
+   448→                                    )
+   449→                                  })}
+   450→                                </RadioGroup>
+   451→                              ) : q.type === 'true_false' && q.options ? (
+   452→                                <RadioGroup
+   453→                                  value={answers[q.id] || ''}
+   454→                                  onValueChange={(val) =>
+   455→                                    handleAnswer(q.id, val)
+   456→                                  }
+   457→                                  disabled={showResults}
+   458→                                >
+   459→                                  {q.options.map((opt, optIdx) => {
+   460→                                    const isSelected = answers[q.id] === opt
+   461→                                    const isCorrect = q.answer.toLowerCase() === opt.toLowerCase()
+   462→                                    const showCorrectness = showResults && isCorrect
+   463→
+   464→                                    return (
+   465→                                      <div
+   466→                                        key={optIdx}
+   467→                                        className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
+   468→                                          showCorrectness
+   469→                                            ? 'border-emerald-500 bg-emerald-500/10'
+   470→                                            : isSelected && showResults
+   471→                                            ? 'border-destructive bg-destructive/10'
+   472→                                            : isSelected
+   473→                                            ? 'border-primary bg-primary/5'
+   474→                                            : 'border-border hover:border-primary/50'
+   475→                                        }`}
+   476→                                      >
+   477→                                        <RadioGroupItem
+   478→                                          value={opt}
+   479→                                          id={`${q.id}-${optIdx}`}
+   480→                                        />
+   481→                                        <Label
+   482→                                          htmlFor={`${q.id}-${optIdx}`}
+   483→                                          className="flex-1 cursor-pointer text-sm"
+   484→                                        >
+   485→                                          {opt}
+   486→                                        </Label>
+   487→                                      </div>
+   488→                                    )
+   489→                                  })}
+   490→                                </RadioGroup>
+   491→                              ) : (
+   492→                                /* Open-ended */
+   493→                                <div className="space-y-2">
+   494→                                  <Input
+   495→                                    placeholder="Type your answer..."
+   496→                                    value={answers[q.id] || ''}
+   497→                                    onChange={(e) =>
+   498→                                      handleAnswer(q.id, e.target.value)
+   499→                                    }
+   500→                                    disabled={showResults}
+   501→                                  />
+   502→                                </div>
+   503→                              )}
+   504→
+   505→                              {/* Explanation */}
+   506→                              {showResults && (
+   507→                                <motion.div
+   508→                                  initial={{ opacity: 0, height: 0 }}
+   509→                                  animate={{ opacity: 1, height: 'auto' }}
+   510→                                  transition={{ duration: 0.3 }}
+   511→                                >
+   512→                                  <div className="mt-3 p-3 rounded-lg bg-muted/50">
+   513→                                    <p className="text-xs font-semibold text-primary mb-1">
+   514→                                      Explanation:
+   515→                                    </p>
+   516→                                    <p className="text-sm text-muted-foreground">
+   517→                                      {q.explanation}
+   518→                                    </p>
+   519→                                    <p className="text-xs text-emerald-500 mt-1 font-medium">
+   520→                                      Correct answer: {q.answer}
+   521→                                    </p>
+   522→                                  </div>
+   523→                                </motion.div>
+   524→                              )}
+   525→                            </CardContent>
+   526→                          </Card>
+   527→                        </motion.div>
+   528→                      )
+   529→                    }
+   530→                    return null
+   531→                  })}
+   532→                </AnimatePresence>
+   533→
+   534→                {/* Navigation */}
+   535→                {!showResults && (
+   536→                  <div className="flex items-center justify-between">
+   537→                    <Button
+   538→                      variant="outline"
+   539→                      onClick={() =>
+   540→                        setCurrentQuestion((prev) =>
+   541→                          Math.max(0, prev - 1)
+   542→                        )
+   543→                      }
+   544→                      disabled={currentQuestion === 0}
+   545→                    >
+   546→                      Previous
+   547→                    </Button>
+   548→                    {currentQuestion < quiz.questions.length - 1 ? (
+   549→                      <Button
+   550→                        onClick={() =>
+   551→                          setCurrentQuestion((prev) => prev + 1)
+   552→                        }
+   553→                        className="gap-1"
+   554→                      >
+   555→                        Next
+   556→                        <ChevronRight size={16} />
+   557→                      </Button>
+   558→                    ) : (
+   559→                      <Button
+   560→                        onClick={() => setShowResults(true)}
+   561→                        className="gap-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white"
+   562→                        disabled={
+   563→                          Object.keys(answers).length <
+   564→                          quiz.questions.length
+   565→                        }
+   566→                      >
+   567→                        <Trophy size={16} />
+   568→                        View Results
+   569→                      </Button>
+   570→                    )}
+   571→                  </div>
+   572→                )}
+   573→
+   574→                {/* Results */}
+   575→                {showResults && (
+   576→                  <motion.div
+   577→                    initial={{ opacity: 0, y: 20 }}
+   578→                    animate={{ opacity: 1, y: 0 }}
+   579→                    transition={{ duration: 0.4 }}
+   580→                  >
+   581→                    <Card className="border-0 shadow-md bg-gradient-to-br from-violet-500/10 to-purple-500/10">
+   582→                      <CardContent className="p-6 text-center">
+   583→                        <Trophy className="text-primary mx-auto mb-3" size={48} />
+   584→                        <h2 className="text-2xl font-bold">Quiz Complete!</h2>
+   585→                        <p className="text-4xl font-bold magic-text mt-3">
+   586→                          {getScore()}/{quiz.questions.length}
+   587→                        </p>
+   588→                        <p className="text-muted-foreground mt-1">
+   589→                          {Math.round(
+   590→                            (getScore() / quiz.questions.length) * 100
+   591→                          )}
+   592→                          % correct
+   593→                        </p>
+   594→                        <div className="flex items-center justify-center gap-3 mt-5">
+   595→                          <Button onClick={resetQuiz} variant="outline">
+   596→                            <RotateCcw size={14} className="mr-1.5" />
+   597→                            Try Another Quiz
+   598→                          </Button>
+   599→                        </div>
+   600→                      </CardContent>
+   601→                    </Card>
+   602→                  </motion.div>
+   603→                )}
+   604→              </div>
+   605→
+   606→              {/* Question navigator sidebar */}
+   607→              <div className="lg:col-span-1">
+   608→                <Card className="border-0 shadow-md">
+   609→                  <CardHeader className="pb-3">
+   610→                    <CardTitle className="text-sm font-semibold">
+   611→                      Questions
+   612→                    </CardTitle>
+   613→                  </CardHeader>
+   614→                  <CardContent>
+   615→                    <div className="grid grid-cols-5 lg:grid-cols-4 gap-2">
+   616→                      {quiz.questions.map((q, idx) => {
+   617→                        const isAnswered = answers[q.id] !== undefined
+   618→                        const isCurrent = idx === currentQuestion
+   619→                        return (
+   620→                          <button
+   621→                            key={q.id}
+   622→                            className={`h-9 w-9 rounded-lg text-xs font-medium transition-all ${
+   623→                              isCurrent
+   624→                                ? 'bg-primary text-primary-foreground'
+   625→                                : showResults
+   626→                                ? isCorrectAnswer(q)
+   627→                                  ? 'bg-emerald-500/20 text-emerald-500'
+   628→                                  : 'bg-destructive/20 text-destructive'
+   629→                                : isAnswered
+   630→                                ? 'bg-primary/20 text-primary'
+   631→                                : 'bg-muted text-muted-foreground hover:bg-accent'
+   632→                            }`}
+   633→                            onClick={() => setCurrentQuestion(idx)}
+   634→                          >
+   635→                            {idx + 1}
+   636→                          </button>
+   637→                        )
+   638→                      })}
+   639→                    </div>
+   640→                  </CardContent>
+   641→                </Card>
+   642→              </div>
+   643→            </div>
+   644→          </div>
+   645→        )}
+   646→      </motion.div>
+   647→    </div>
+   648→  )
+   649→}
+   650→

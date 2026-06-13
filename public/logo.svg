@@ -2,11 +2,16 @@
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#7C3AED"/>
-      <stop offset="100%" style="stop-color:#A855F7"/>
+      <stop offset="50%" style="stop-color:#6366F1"/>
+      <stop offset="100%" style="stop-color:#3B82F6"/>
     </linearGradient>
-    <linearGradient id="wand" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#E9D5FF"/>
-      <stop offset="100%" style="stop-color:#FFFFFF"/>
+    <linearGradient id="star" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FBBF24"/>
+      <stop offset="100%" style="stop-color:#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#E0E7FF"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
@@ -15,31 +20,57 @@
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
+
   <!-- Rounded square background -->
   <rect x="16" y="16" width="480" height="480" rx="96" fill="url(#bg)"/>
-  <!-- Magic wand -->
-  <line x1="155" y1="357" x2="320" y2="155" stroke="url(#wand)" stroke-width="28" stroke-linecap="round"/>
-  <!-- Wand tip glow -->
-  <circle cx="320" cy="155" r="20" fill="#FDE68A" filter="url(#glow)" opacity="0.9"/>
-  <!-- Sparkle 1 - top right -->
-  <path d="M370 100 L375 85 L380 100 L395 105 L380 110 L375 125 L370 110 L355 105 Z" fill="#FDE68A" filter="url(#glow)"/>
-  <!-- Sparkle 2 - right -->
-  <path d="M390 170 L393 162 L396 170 L404 173 L396 176 L393 184 L390 176 L382 173 Z" fill="#FBBF24" filter="url(#glow)"/>
-  <!-- Sparkle 3 - top -->
-  <path d="M310 90 L313 82 L316 90 L324 93 L316 96 L313 104 L310 96 L302 93 Z" fill="#FBBF24" filter="url(#glow)"/>
-  <!-- Sparkle 4 - small -->
-  <path d="M350 130 L352 125 L354 130 L359 132 L354 134 L352 139 L350 134 L345 132 Z" fill="#FDE68A" filter="url(#glow)"/>
-  <!-- Brain/AI node circles -->
-  <circle cx="230" cy="260" r="18" fill="none" stroke="#E9D5FF" stroke-width="3" opacity="0.7"/>
-  <circle cx="280" cy="230" r="14" fill="none" stroke="#E9D5FF" stroke-width="3" opacity="0.6"/>
-  <circle cx="260" cy="300" r="12" fill="none" stroke="#E9D5FF" stroke-width="3" opacity="0.5"/>
-  <!-- AI connection lines -->
-  <line x1="245" y1="252" x2="268" y2="238" stroke="#E9D5FF" stroke-width="2" opacity="0.4"/>
-  <line x1="240" y1="275" x2="252" y2="292" stroke="#E9D5FF" stroke-width="2" opacity="0.4"/>
-  <line x1="290" y1="228" x2="268" y2="294" stroke="#E9D5FF" stroke-width="2" opacity="0.3"/>
-  <!-- Node dots -->
-  <circle cx="230" cy="260" r="5" fill="#E9D5FF" opacity="0.8"/>
-  <circle cx="280" cy="230" r="4" fill="#E9D5FF" opacity="0.7"/>
-  <circle cx="260" cy="300" r="3.5" fill="#E9D5FF" opacity="0.6"/>
+
+  <!-- Subtle inner glow -->
+  <rect x="32" y="32" width="448" height="448" rx="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Large magic wand -->
+  <g filter="url(#glow)">
+    <!-- Wand body -->
+    <rect x="185" y="230" width="180" height="14" rx="7" fill="url(#spark)" transform="rotate(-45 275 237)" opacity="0.95"/>
+    <!-- Wand tip -->
+    <circle cx="400" cy="115" r="12" fill="url(#star)" filter="url(#softGlow)"/>
+  </g>
+
+  <!-- Star burst at wand tip -->
+  <g filter="url(#softGlow)">
+    <polygon points="400,70 405,100 435,105 405,110 400,140 395,110 365,105 395,100" fill="url(#star)" opacity="0.9"/>
+    <polygon points="430,80 432,98 450,100 432,102 430,120 428,102 410,100 428,98" fill="url(#star)" opacity="0.7"/>
+    <polygon points="370,78 372,93 387,95 372,97 370,112 368,97 353,95 368,93" fill="url(#star)" opacity="0.6"/>
+  </g>
+
+  <!-- Sparkle dots around the star -->
+  <circle cx="440" cy="72" r="4" fill="white" opacity="0.8" filter="url(#softGlow)"/>
+  <circle cx="360" cy="70" r="3" fill="white" opacity="0.7" filter="url(#softGlow)"/>
+  <circle cx="425" cy="135" r="3.5" fill="white" opacity="0.6" filter="url(#softGlow)"/>
+  <circle cx="370" cy="130" r="3" fill="white" opacity="0.5" filter="url(#softGlow)"/>
+  <circle cx="450" cy="105" r="2.5" fill="white" opacity="0.7" filter="url(#softGlow)"/>
+  <circle cx="355" cy="100" r="2" fill="white" opacity="0.6" filter="url(#softGlow)"/>
+
+  <!-- AI text / brain circuit lines -->
+  <g opacity="0.3" stroke="rgba(255,255,255,0.6)" stroke-width="2" fill="none">
+    <path d="M120 340 Q140 320 160 340 Q180 360 200 340"/>
+    <path d="M130 370 Q150 350 170 370 Q190 390 210 370"/>
+    <circle cx="120" cy="340" r="4" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="200" cy="340" r="4" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="130" cy="370" r="4" fill="rgba(255,255,255,0.4)"/>
+    <circle cx="210" cy="370" r="4" fill="rgba(255,255,255,0.4)"/>
+  </g>
+
+  <!-- "AI" text -->
+  <text x="256" y="410" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" fill="white" opacity="0.95" letter-spacing="-2">AI</text>
+
+  <!-- Decorative bottom line -->
+  <rect x="196" y="430" width="120" height="4" rx="2" fill="rgba(255,255,255,0.3)"/>
 </svg>

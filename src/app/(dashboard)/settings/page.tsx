@@ -68,7 +68,7 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false)
 
   const [name, setName] = useState(session?.user?.name || 'Student')
-  const [email, setEmail] = useState(session?.user?.email || 'student@magicai.com')
+  const [email, setEmail] = useState(session?.user?.email || '')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -90,10 +90,22 @@ export default function SettingsPage() {
 
   const handleSaveProfile = async () => {
     setSaving(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setSaving(false)
-    toast.success('Profile updated successfully!')
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email }),
+      })
+      if (res.ok) {
+        toast.success('Profile updated successfully!')
+      } else {
+        toast.error('Failed to update profile')
+      }
+    } catch {
+      toast.error('Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleChangePassword = async () => {
@@ -110,12 +122,26 @@ export default function SettingsPage() {
       return
     }
     setSaving(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setSaving(false)
-    setCurrentPassword('')
-    setNewPassword('')
-    setConfirmPassword('')
-    toast.success('Password changed successfully!')
+    try {
+      const res = await fetch('/api/user/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+      if (res.ok) {
+        setCurrentPassword('')
+        setNewPassword('')
+        setConfirmPassword('')
+        toast.success('Password changed successfully!')
+      } else {
+        const data = await res.json()
+        toast.error(data.error || 'Failed to change password')
+      }
+    } catch {
+      toast.error('Failed to change password')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDeleteAccount = () => {
@@ -268,12 +294,6 @@ export default function SettingsPage() {
                   <div className="flex justify-between text-muted-foreground">
                     <span>Billing cycle</span>
                     <span className="font-medium text-foreground">Monthly</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Next billing date</span>
-                    <span className="font-medium text-foreground">
-                      March 15, 2026
-                    </span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Amount</span>

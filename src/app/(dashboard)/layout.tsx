@@ -147,18 +147,17 @@ export default function DashboardLayout({
     () => false
   )
 
-  // Redirect to login if unauthenticated
+  // Redirect to login if unauthenticated (middleware handles primary protection)
+  // This is a fallback for edge cases where middleware doesn't catch it
   useEffect(() => {
     if (status === 'unauthenticated') {
-      const timer = setTimeout(() => {
-        window.location.href = '/login'
-      }, 1500)
-      return () => clearTimeout(timer)
+      router.replace('/login')
     }
-  }, [status])
+  }, [status, router])
 
   // Show loading state while session is being checked
-  if (status === 'loading') {
+  // Wait longer for session to resolve - don't flash unauthenticated state
+  if (status === 'loading' || !session) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -174,6 +173,11 @@ export default function DashboardLayout({
         </div>
       </div>
     )
+  }
+
+  // If unauthenticated and no session, redirect (middleware should handle this, but as fallback)
+  if (status === 'unauthenticated') {
+    return null
   }
 
   const userName = session?.user?.name || 'Student'

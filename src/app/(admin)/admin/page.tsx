@@ -47,22 +47,16 @@ interface RecentUser {
 }
 
 const defaultStats: Stats = {
-  totalUsers: 1247,
-  proUsers: 342,
-  enterpriseUsers: 58,
-  freeUsers: 847,
-  totalConversations: 8432,
-  totalQuizzes: 3156,
-  revenue: 342 * 19.99 + 58 * 49.99,
+  totalUsers: 0,
+  proUsers: 0,
+  enterpriseUsers: 0,
+  freeUsers: 0,
+  totalConversations: 0,
+  totalQuizzes: 0,
+  revenue: 0,
 }
 
-const defaultRecentUsers: RecentUser[] = [
-  { id: '1', name: 'Alice Johnson', email: 'alice@example.com', plan: 'pro', role: 'student', createdAt: new Date().toISOString() },
-  { id: '2', name: 'Bob Smith', email: 'bob@example.com', plan: 'free', role: 'student', createdAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: '3', name: 'Carol Davis', email: 'carol@example.com', plan: 'enterprise', role: 'admin', createdAt: new Date(Date.now() - 172800000).toISOString() },
-  { id: '4', name: 'David Wilson', email: 'david@example.com', plan: 'pro', role: 'student', createdAt: new Date(Date.now() - 259200000).toISOString() },
-  { id: '5', name: 'Eva Martinez', email: 'eva@example.com', plan: 'free', role: 'student', createdAt: new Date(Date.now() - 345600000).toISOString() },
-]
+const defaultRecentUsers: RecentUser[] = []
 
 function getPlanBadge(plan: string) {
   switch (plan) {
@@ -106,13 +100,13 @@ export default function AdminDashboard() {
         const data = await res.json()
         if (data.stats) {
           setStats({
-            totalUsers: data.stats.totalUsers || defaultStats.totalUsers,
-            proUsers: data.stats.proUsers || defaultStats.proUsers,
-            enterpriseUsers: data.stats.enterpriseUsers || defaultStats.enterpriseUsers,
-            freeUsers: data.stats.freeUsers || defaultStats.freeUsers,
-            totalConversations: data.stats.totalConversations || defaultStats.totalConversations,
-            totalQuizzes: data.stats.totalQuizzes || defaultStats.totalQuizzes,
-            revenue: data.stats.revenue || defaultStats.revenue,
+            totalUsers: data.stats.totalUsers ?? 0,
+            proUsers: data.stats.proUsers ?? 0,
+            enterpriseUsers: data.stats.enterpriseUsers ?? 0,
+            freeUsers: data.stats.freeUsers ?? 0,
+            totalConversations: data.stats.totalConversations ?? 0,
+            totalQuizzes: data.stats.totalQuizzes ?? 0,
+            revenue: data.stats.revenue ?? 0,
           })
         }
         if (data.recentUsers && data.recentUsers.length > 0) {
@@ -259,18 +253,26 @@ export default function AdminDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {recentUsers.map((user) => (
-                    <TableRow key={user.id} className="border-gray-800/50 hover:bg-gray-800/30">
-                      <TableCell className="font-medium text-white">
-                        {user.name || 'N/A'}
-                      </TableCell>
-                      <TableCell className="text-gray-400">{user.email}</TableCell>
-                      <TableCell>{getPlanBadge(user.plan)}</TableCell>
-                      <TableCell className="text-gray-400 hidden sm:table-cell">
-                        {formatDate(user.createdAt)}
+                  {recentUsers.length > 0 ? (
+                    recentUsers.map((user) => (
+                      <TableRow key={user.id} className="border-gray-800/50 hover:bg-gray-800/30">
+                        <TableCell className="font-medium text-white">
+                          {user.name || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-gray-400">{user.email}</TableCell>
+                        <TableCell>{getPlanBadge(user.plan)}</TableCell>
+                        <TableCell className="text-gray-400 hidden sm:table-cell">
+                          {formatDate(user.createdAt)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                        No users yet
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )}
                 </TableBody>
               </Table>
             )}

@@ -75,20 +75,7 @@ interface User {
   }
 }
 
-const mockUsers: User[] = [
-  { id: '1', name: 'Alice Johnson', email: 'alice@example.com', role: 'student', plan: 'pro', emailVerified: true, createdAt: '2025-01-15T10:30:00Z', _count: { conversations: 23, quizzes: 12, progress: 45 } },
-  { id: '2', name: 'Bob Smith', email: 'bob@example.com', role: 'student', plan: 'free', emailVerified: true, createdAt: '2025-01-14T08:20:00Z', _count: { conversations: 5, quizzes: 2, progress: 8 } },
-  { id: '3', name: 'Carol Davis', email: 'carol@example.com', role: 'admin', plan: 'enterprise', emailVerified: true, createdAt: '2025-01-13T14:10:00Z', _count: { conversations: 56, quizzes: 34, progress: 78 } },
-  { id: '4', name: 'David Wilson', email: 'david@example.com', role: 'student', plan: 'pro', emailVerified: false, createdAt: '2025-01-12T16:45:00Z', _count: { conversations: 12, quizzes: 8, progress: 23 } },
-  { id: '5', name: 'Eva Martinez', email: 'eva@example.com', role: 'student', plan: 'free', emailVerified: true, createdAt: '2025-01-11T09:15:00Z', _count: { conversations: 3, quizzes: 1, progress: 5 } },
-  { id: '6', name: 'Frank Brown', email: 'frank@example.com', role: 'student', plan: 'pro', emailVerified: true, createdAt: '2025-01-10T11:30:00Z', _count: { conversations: 18, quizzes: 15, progress: 34 } },
-  { id: '7', name: 'Grace Lee', email: 'grace@example.com', role: 'student', plan: 'enterprise', emailVerified: true, createdAt: '2025-01-09T13:20:00Z', _count: { conversations: 45, quizzes: 22, progress: 67 } },
-  { id: '8', name: 'Henry Taylor', email: 'henry@example.com', role: 'student', plan: 'free', emailVerified: false, createdAt: '2025-01-08T07:45:00Z', _count: { conversations: 1, quizzes: 0, progress: 2 } },
-  { id: '9', name: 'Ivy Anderson', email: 'ivy@example.com', role: 'admin', plan: 'pro', emailVerified: true, createdAt: '2025-01-07T15:00:00Z', _count: { conversations: 34, quizzes: 28, progress: 56 } },
-  { id: '10', name: 'Jack Thomas', email: 'jack@example.com', role: 'student', plan: 'free', emailVerified: true, createdAt: '2025-01-06T10:10:00Z', _count: { conversations: 7, quizzes: 4, progress: 12 } },
-  { id: '11', name: 'Karen White', email: 'karen@example.com', role: 'student', plan: 'pro', emailVerified: true, createdAt: '2025-01-05T12:30:00Z', _count: { conversations: 29, quizzes: 18, progress: 41 } },
-  { id: '12', name: 'Leo Harris', email: 'leo@example.com', role: 'student', plan: 'enterprise', emailVerified: true, createdAt: '2025-01-04T09:00:00Z', _count: { conversations: 38, quizzes: 25, progress: 52 } },
-]
+const emptyUsers: User[] = []
 
 function getPlanBadge(plan: string) {
   switch (plan) {
@@ -123,8 +110,8 @@ function formatDate(dateStr: string) {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>(mockUsers)
-  const [total, setTotal] = useState(mockUsers.length)
+  const [users, setUsers] = useState<User[]>(emptyUsers)
+  const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
   const [search, setSearch] = useState('')
@@ -156,15 +143,13 @@ export default function AdminUsersPage() {
       })
       if (res.ok) {
         const data = await res.json()
-        setUsers(data.users || mockUsers)
-        setTotal(data.total || mockUsers.length)
+        setUsers(data.users || [])
+        setTotal(data.total || 0)
       } else {
         setError('Failed to load users')
-        setUsers(mockUsers)
       }
     } catch {
-      setError('Network error — using sample data')
-      setUsers(mockUsers)
+      setError('Network error — please check your connection')
     } finally {
       setLoading(false)
     }

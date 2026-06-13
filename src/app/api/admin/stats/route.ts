@@ -79,30 +79,19 @@ export async function GET(req: NextRequest) {
       recentUsers = recentUsersData
       subjectProgress = subjectProgressData
     } catch (dbError) {
-      // Fallback to mock data if DB is unavailable
+      console.error("DB error in admin stats:", dbError)
+      // Return zeroed stats instead of mock data
       stats = {
-        totalUsers: 1247,
-        proUsers: 342,
-        enterpriseUsers: 58,
-        freeUsers: 847,
-        totalConversations: 8432,
-        totalQuizzes: 3156,
-        revenue: 342 * 19.99 + 58 * 49.99,
+        totalUsers: 0,
+        proUsers: 0,
+        enterpriseUsers: 0,
+        freeUsers: 0,
+        totalConversations: 0,
+        totalQuizzes: 0,
+        revenue: 0,
       }
-      recentUsers = [
-        { id: "1", name: "Alice Johnson", email: "alice@example.com", plan: "pro", role: "student", createdAt: new Date().toISOString() },
-        { id: "2", name: "Bob Smith", email: "bob@example.com", plan: "free", role: "student", createdAt: new Date(Date.now() - 86400000).toISOString() },
-        { id: "3", name: "Carol Davis", email: "carol@example.com", plan: "enterprise", role: "admin", createdAt: new Date(Date.now() - 172800000).toISOString() },
-        { id: "4", name: "David Wilson", email: "david@example.com", plan: "pro", role: "student", createdAt: new Date(Date.now() - 259200000).toISOString() },
-        { id: "5", name: "Eva Martinez", email: "eva@example.com", plan: "free", role: "student", createdAt: new Date(Date.now() - 345600000).toISOString() },
-      ]
-      subjectProgress = [
-        { subject: "Mathematics", _count: { subject: 456 }, _avg: { score: 78 } },
-        { subject: "Physics", _count: { subject: 312 }, _avg: { score: 72 } },
-        { subject: "Chemistry", _count: { subject: 289 }, _avg: { score: 75 } },
-        { subject: "Biology", _count: { subject: 234 }, _avg: { score: 81 } },
-        { subject: "Computer Science", _count: { subject: 567 }, _avg: { score: 85 } },
-      ]
+      recentUsers = []
+      subjectProgress = []
     }
 
     return NextResponse.json({ stats, recentUsers, subjectProgress })

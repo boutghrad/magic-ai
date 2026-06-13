@@ -1,13 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Calculator,
   Loader2,
   Send,
   History,
-  PiIcon,
   Shapes,
   BarChart3,
   Triangle,
@@ -37,13 +36,7 @@ const categories = [
   { label: 'Trigonometry', icon: Triangle },
 ]
 
-const mockHistory = [
-  { id: 1, problem: 'Solve x² - 5x + 6 = 0', time: '2 min ago' },
-  { id: 2, problem: 'Find derivative of sin(x)cos(x)', time: '1 hour ago' },
-  { id: 3, problem: 'Calculate ∫₀¹ x² dx', time: '3 hours ago' },
-  { id: 4, problem: 'Find the area of a circle with r=5', time: 'Yesterday' },
-  { id: 5, problem: 'Solve 2x + 3 = 11', time: 'Yesterday' },
-]
+
 
 function MarkdownRenderer({ content }: { content: string }) {
   const html = content
@@ -71,6 +64,26 @@ export default function MathSolverPage() {
   const [loading, setLoading] = useState(false)
   const [solution, setSolution] = useState('')
   const [showHistory, setShowHistory] = useState(true)
+  const [history, setHistory] = useState<Array<{ id: string; problem: string; createdAt: string }>>([])
+  const [historyLoading, setHistoryLoading] = useState(true)
+
+  // Fetch real history from API
+  useEffect(() => {
+    async function fetchHistory() {
+      try {
+        const res = await fetch('/api/math/history')
+        if (res.ok) {
+          const data = await res.json()
+          setHistory(data.history || [])
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+    fetchHistory()
+  }, [solution]) // refetch after new solution is generated
 
   const handleSolve = async () => {
     if (!problem.trim()) {
@@ -248,22 +261,34 @@ export default function MathSolverPage() {
               </CardHeader>
               <CardContent className={showHistory ? '' : 'hidden lg:block'}>
                 <ScrollArea className="max-h-[400px]">
-                  <div className="space-y-2">
-                    {mockHistory.map((item) => (
-                      <button
-                        key={item.id}
-                        className="w-full text-left p-3 rounded-lg hover:bg-accent/50 transition-colors group"
-                        onClick={() => setProblem(item.problem)}
-                      >
-                        <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                          {item.problem}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {item.time}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : history.length > 0 ? (
+                    <div className="space-y-2">
+                      {history.map((item) => (
+                        <button
+                          key={item.id}
+                          className="w-full text-left p-3 rounded-lg hover:bg-accent/50 transition-colors group"
+                          onClick={() => setProblem(item.problem)}
+                        >
+                          <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                            {item.problem}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(item.createdAt).toLocaleDateString()}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <History className="h-8 w-8 text-muted-foreground/30 mb-2" />
+                      <p className="text-xs text-muted-foreground">No history yet</p>
+                      <p className="text-xs text-muted-foreground">Solve a problem to see it here</p>
+                    </div>
+                  )}
                 </ScrollArea>
               </CardContent>
             </Card>

@@ -224,8 +224,6 @@ export default function HomePage() {
               <div className="h-12 w-12 rounded-xl bg-pink-500/10 flex items-center justify-center"><GraduationCap className="h-6 w-6 text-pink-400" /></div>
             </motion.div>
           </div>
-
-          </div>
         </div>
       </section>
 

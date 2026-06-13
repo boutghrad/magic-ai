@@ -1,7 +1,29 @@
 import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder", {
-  apiVersion: "2023-10-16" as any,
+// Stripe is only initialized when the secret key is available
+// This prevents errors when Stripe is not configured
+let stripeInstance: Stripe | null = null
+
+function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const key = process.env.STRIPE_SECRET_KEY
+    if (!key) {
+      throw new Error("STRIPE_SECRET_KEY is not configured")
+    }
+    stripeInstance = new Stripe(key, {
+      apiVersion: "2023-10-16" as any,
+    })
+  }
+  return stripeInstance
+}
+
+// Export a proxy that lazily initializes Stripe
+export const stripe = new Proxy({} as Stripe, {
+  get(target, prop) {
+    const instance = getStripe()
+    const value = (instance as any)[prop]
+    return typeof value === 'function' ? value.bind(instance) : value
+  },
 })
 
 export const PLANS = {

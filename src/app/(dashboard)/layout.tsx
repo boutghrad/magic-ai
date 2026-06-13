@@ -141,23 +141,36 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [sessionCheckDone, setSessionCheckDone] = useState(false)
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false
   )
 
-  // Redirect to login if unauthenticated (middleware handles primary protection)
-  // This is a fallback for edge cases where middleware doesn't catch it
+  // Wait for session to resolve, then handle auth state
+  // We do NOT redirect immediately - we wait for session to fully load first
   useEffect(() => {
+    // Only act after session status is no longer loading
+    if (status === 'loading') return
+
+    setSessionCheckDone(true)
+
+    // If session is confirmed unauthenticated after loading is done,
+    // redirect to login. But use a small delay to avoid race conditions
+    // with middleware and cookie setting.
     if (status === 'unauthenticated') {
-      router.replace('/login')
+      const timer = setTimeout(() => {
+        router.replace('/login')
+      }, 300)
+      return () => clearTimeout(timer)
     }
   }, [status, router])
 
   // Show loading state while session is being checked
-  // Wait longer for session to resolve - don't flash unauthenticated state
-  if (status === 'loading' || !session) {
+  // This is the critical fix: we wait for session to fully resolve
+  // before showing anything, and we never redirect during loading
+  if (status === 'loading' || !sessionCheckDone) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -175,11 +188,21 @@ export default function DashboardLayout({
     )
   }
 
-  // If unauthenticated and no session, redirect (middleware should handle this, but as fallback)
+  // If unauthenticated after loading, show redirecting state (not a flash of content)
   if (status === 'unauthenticated') {
-    return null
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 rounded-xl overflow-hidden">
+            <Image src="/logo.svg" alt="Magic AI" width={40} height={40} className="w-full h-full object-cover" />
+          </div>
+          <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    )
   }
 
+  // Authenticated - show dashboard
   const userName = session?.user?.name || 'Student'
   const userEmail = session?.user?.email || ''
   const userImage = session?.user?.image || ''

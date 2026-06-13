@@ -1,7 +1,6 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 export default function AuthLayout({
@@ -10,14 +9,15 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   const { data: session, status } = useSession()
-  const router = useRouter()
 
   // If user is already authenticated, redirect to dashboard
+  // Use window.location.href for a full page reload to ensure
+  // the middleware and session are in sync
   useEffect(() => {
     if (status === 'authenticated' && session) {
-      router.replace('/dashboard')
+      window.location.href = '/dashboard'
     }
-  }, [status, session, router])
+  }, [status, session])
 
   // Show nothing while checking session to prevent flash
   if (status === 'loading') {
@@ -32,7 +32,7 @@ export default function AuthLayout({
     )
   }
 
-  // If authenticated, don't render auth pages
+  // If authenticated, don't render auth pages (redirect in progress)
   if (status === 'authenticated' && session) {
     return null
   }

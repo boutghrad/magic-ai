@@ -7,11 +7,9 @@ import {
   Crown,
   Building2,
   DollarSign,
-  TrendingUp,
   Activity,
   ArrowUpRight,
   ArrowRight,
-  Loader2,
   AlertCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -134,7 +132,6 @@ export default function AdminDashboard() {
       color: 'text-blue-400',
       bgColor: 'bg-blue-600/10',
       borderColor: 'border-blue-900/30',
-      change: '+12%',
     },
     {
       title: 'Pro Users',
@@ -143,7 +140,6 @@ export default function AdminDashboard() {
       color: 'text-orange-400',
       bgColor: 'bg-orange-600/10',
       borderColor: 'border-orange-900/30',
-      change: '+8%',
     },
     {
       title: 'Enterprise Users',
@@ -152,7 +148,6 @@ export default function AdminDashboard() {
       color: 'text-red-400',
       bgColor: 'bg-red-600/10',
       borderColor: 'border-red-900/30',
-      change: '+23%',
     },
     {
       title: 'Monthly Revenue',
@@ -161,7 +156,6 @@ export default function AdminDashboard() {
       color: 'text-emerald-400',
       bgColor: 'bg-emerald-600/10',
       borderColor: 'border-emerald-900/30',
-      change: '+15%',
     },
   ]
 
@@ -202,13 +196,7 @@ export default function AdminDashboard() {
                 {loading ? (
                   <Skeleton className="h-8 w-24 bg-gray-800" />
                 ) : (
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-white">{card.value}</span>
-                    <span className="flex items-center text-xs font-medium text-emerald-400">
-                      <TrendingUp className="h-3 w-3 mr-0.5" />
-                      {card.change}
-                    </span>
-                  </div>
+                  <span className="text-2xl font-bold text-white">{card.value}</span>
                 )}
               </CardContent>
             </Card>

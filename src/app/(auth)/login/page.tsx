@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -49,6 +49,17 @@ export default function LoginPage() {
     }
   }, [])
 
+  // Helper: Wait for session to be established after signIn
+  const waitForSession = async (): Promise<boolean> => {
+    // Poll getSession() up to 10 times with 300ms intervals
+    for (let i = 0; i < 10; i++) {
+      const session = await getSession()
+      if (session) return true
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+    return false
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -84,9 +95,17 @@ export default function LoginPage() {
           : result.error)
         setIsLoading(false)
       } else if (result?.ok) {
-        // Use window.location.href for a full page reload
-        // This is the most reliable way to establish the session in serverless environments
-        window.location.href = '/dashboard'
+        // Wait for session to be fully established before navigating
+        const sessionEstablished = await waitForSession()
+
+        if (sessionEstablished) {
+          // Session confirmed - use router.push for client navigation
+          router.push('/dashboard')
+        } else {
+          // Session not confirmed via polling, but signIn returned ok
+          // Use full page reload as fallback - the cookie should be set
+          window.location.href = '/dashboard'
+        }
       } else {
         setError('Sign in failed. Please try again.')
         setIsLoading(false)

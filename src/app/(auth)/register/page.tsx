@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -43,6 +43,16 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+
+  // Helper: Wait for session to be established after signIn
+  const waitForSession = async (): Promise<boolean> => {
+    for (let i = 0; i < 10; i++) {
+      const session = await getSession()
+      if (session) return true
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    }
+    return false
+  }
 
   // Password strength indicator
   const getPasswordStrength = (pwd: string) => {
@@ -122,14 +132,18 @@ export default function RegisterPage() {
         redirect: false,
       })
 
-      if (signInResult?.error) {
+      if (signInResult?.ok) {
+        // Wait for session to be fully established
+        const sessionEstablished = await waitForSession()
+        if (sessionEstablished) {
+          router.push('/dashboard')
+        } else {
+          window.location.href = '/dashboard'
+        }
+      } else {
         // Registration succeeded but auto sign-in failed - redirect to login
         window.location.href = '/login?registered=true'
-        return
       }
-
-      // Use full page reload to reliably establish session
-      window.location.href = '/dashboard'
     } catch {
       setError('An unexpected error occurred. Please try again.')
       setIsLoading(false)

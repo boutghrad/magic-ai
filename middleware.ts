@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.url ? new URL(request.url) : { pathname: request.nextUrl.pathname }
+  const { pathname } = request.nextUrl
 
   // Get the JWT token
   const token = await getToken({
@@ -12,10 +12,12 @@ export async function middleware(request: NextRequest) {
   })
 
   // Public paths that don't require authentication
-  const publicPaths = ['/login', '/register', '/api/auth']
-  const isPublicPath = publicPaths.some((path) => pathname.startsWith(path))
+  const publicPaths = ['/login', '/register', '/api/auth', '/', '/pricing']
+  const isPublicPath = publicPaths.some((path) =>
+    path === '/' ? pathname === '/' : pathname.startsWith(path)
+  )
 
-  // Static files and API routes (except auth) should pass through
+  // Static files and API routes should pass through
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
@@ -26,7 +28,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is authenticated and trying to access auth pages, redirect to dashboard
-  if (token && isPublicPath) {
+  if (token && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

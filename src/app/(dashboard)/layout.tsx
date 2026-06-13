@@ -3,23 +3,28 @@ import { redirect } from 'next/navigation'
 import { cookies, headers } from 'next/headers'
 import DashboardClient from './dashboard-client'
 
+const SECRET = process.env.NEXTAUTH_SECRET || 'magic-ai-super-secret-key-2024-production-ready'
+
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Server-side auth check using getToken() (same as middleware)
-  // We construct a request-like object from next/headers since server components
-  // don't receive a NextRequest. getToken() reads the JWT from cookies directly,
-  // which is reliable and matches what the middleware does.
+  // Server-side auth check using getToken() — same approach as middleware.
+  // getToken() reads the JWT directly from cookies, so there's no race condition
+  // with client-side useSession() which can return "unauthenticated" before the
+  // cookie is fully propagated in the browser.
+  const cookieStore = await cookies()
+  const headersList = await headers()
+
   const token = await getToken({
     req: {
-      headers: Object.fromEntries(await headers()),
+      headers: Object.fromEntries(headersList),
       cookies: Object.fromEntries(
-        (await cookies()).getAll().map((c) => [c.name, c.value])
+        cookieStore.getAll().map((c) => [c.name, c.value])
       ),
     } as any,
-    secret: process.env.NEXTAUTH_SECRET || 'magic-ai-super-secret-key-2024-production-ready',
+    secret: SECRET,
   })
 
   if (!token) {

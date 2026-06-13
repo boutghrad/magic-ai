@@ -41,11 +41,17 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
 
   // Show success message if redirected from registration
+  const [callbackUrl, setCallbackUrl] = useState('/dashboard')
   const [successMessage, setSuccessMessage] = useState('')
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('registered') === 'true') {
       setSuccessMessage('Account created successfully! Please sign in.')
+    }
+    // Capture the callbackUrl so we redirect to the right page after login
+    const cb = params.get('callbackUrl')
+    if (cb) {
+      setCallbackUrl(cb)
     }
   }, [])
 
@@ -89,7 +95,7 @@ export default function LoginPage() {
         // which reads the JWT directly from cookies, so a full page reload is the
         // most reliable way to ensure the cookie is picked up.
         await new Promise((resolve) => setTimeout(resolve, 300))
-        window.location.href = '/dashboard'
+        window.location.href = callbackUrl
       } else {
         setError('Sign in failed. Please try again.')
         setIsLoading(false)

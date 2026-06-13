@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -18,6 +18,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -115,45 +116,22 @@ export default function RegisterPage() {
       }
 
       // Auto sign-in after successful registration
-      try {
-        const signInResult = await signIn('credentials', {
-          email: email.trim().toLowerCase(),
-          password,
-          redirect: false,
-        })
+      const signInResult = await signIn('credentials', {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      })
 
-        if (signInResult?.error) {
-          // Registration succeeded but auto sign-in failed - redirect to login with message
-          console.error('Auto sign-in failed after registration:', signInResult.error)
-          router.push('/login?registered=true')
-          return
-        }
-
-        // Poll for session to be established (max 5 attempts, 500ms each)
-        let sessionEstablished = false
-        for (let i = 0; i < 5; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 500))
-          const session = await getSession()
-          if (session) {
-            sessionEstablished = true
-            break
-          }
-        }
-
-        if (sessionEstablished) {
-          router.push('/dashboard')
-          router.refresh()
-        } else {
-          // Session not yet established, redirect to login
-          router.push('/login?registered=true')
-        }
-      } catch (signInError) {
-        console.error('Sign-in exception after registration:', signInError)
-        router.push('/login?registered=true')
+      if (signInResult?.error) {
+        // Registration succeeded but auto sign-in failed - redirect to login
+        window.location.href = '/login?registered=true'
+        return
       }
+
+      // Use full page reload to reliably establish session
+      window.location.href = '/dashboard'
     } catch {
       setError('An unexpected error occurred. Please try again.')
-    } finally {
       setIsLoading(false)
     }
   }
@@ -208,8 +186,15 @@ export default function RegisterPage() {
               className="flex flex-col items-center gap-3"
             >
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl magic-gradient flex items-center justify-center shadow-lg shadow-purple-500/25">
-                  <Sparkles className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/25">
+                  <Image
+                    src="/logo.svg"
+                    alt="Magic AI"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
                 </div>
                 <div className="absolute -inset-1 rounded-2xl magic-gradient opacity-30 blur-md -z-10" />
               </div>

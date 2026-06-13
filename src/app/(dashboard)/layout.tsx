@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { useTheme } from 'next-themes'
@@ -23,12 +23,12 @@ import {
   Menu,
 } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,8 +41,6 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -149,24 +147,23 @@ export default function DashboardLayout({
     () => false
   )
 
-  // Redirect to login if unauthenticated (with longer delay to allow session establishment)
+  // Redirect to login if unauthenticated
   useEffect(() => {
     if (status === 'unauthenticated') {
-      // Longer delay to avoid redirecting before session cookie is set
       const timer = setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+        window.location.href = '/login'
+      }, 1500)
       return () => clearTimeout(timer)
     }
-  }, [status, router])
+  }, [status])
 
   // Show loading state while session is being checked
   if (status === 'loading') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-xl magic-gradient flex items-center justify-center animate-pulse">
-            <Sparkles className="h-5 w-5 text-white" />
+          <div className="h-10 w-10 rounded-xl overflow-hidden animate-pulse">
+            <Image src="/logo.svg" alt="Magic AI" width={40} height={40} className="w-full h-full object-cover" />
           </div>
           <div className="flex items-center gap-2">
             <div className="h-2 w-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
@@ -180,16 +177,9 @@ export default function DashboardLayout({
   }
 
   const userName = session?.user?.name || 'Student'
-  const userEmail = session?.user?.email || 'student@magicai.com'
+  const userEmail = session?.user?.email || ''
   const userImage = session?.user?.image || ''
   const userPlan = (session?.user as any)?.plan || 'free'
-
-  const notifications = [
-    { id: 1, title: 'New quiz available', message: 'Try the Physics quiz!', read: false },
-    { id: 2, title: 'Study plan reminder', message: 'Your study session starts in 1 hour', read: false },
-    { id: 3, title: 'Achievement unlocked', message: 'You completed 10 math problems!', read: true },
-  ]
-  const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
     <TooltipProvider delayDuration={0}>
@@ -202,8 +192,8 @@ export default function DashboardLayout({
         >
           {/* Logo */}
           <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-              <Sparkles className="text-primary" size={20} />
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden">
+              <Image src="/logo.svg" alt="Magic AI" width={36} height={36} className="w-full h-full object-cover" />
             </div>
             {!collapsed && (
               <motion.div
@@ -266,7 +256,7 @@ export default function DashboardLayout({
                       variant="secondary"
                       className="text-[10px] px-1.5 py-0 h-4"
                     >
-                      {userPlan === 'pro' ? '✨ Pro' : 'Free'}
+                      {userPlan === 'pro' ? 'Pro' : 'Free'}
                     </Badge>
                   </div>
                 </div>
@@ -279,8 +269,8 @@ export default function DashboardLayout({
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetContent side="left" className="w-72 p-0 bg-sidebar">
             <SheetHeader className="px-4 h-16 flex flex-row items-center gap-3 border-b border-border">
-              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10">
-                <Sparkles className="text-primary" size={20} />
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg overflow-hidden">
+                <Image src="/logo.svg" alt="Magic AI" width={36} height={36} className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-sm magic-text">Magic AI</span>
@@ -309,7 +299,7 @@ export default function DashboardLayout({
                     variant="secondary"
                     className="text-[10px] px-1.5 py-0 h-4"
                   >
-                    {userPlan === 'pro' ? '✨ Pro' : 'Free'}
+                    {userPlan === 'pro' ? 'Pro' : 'Free'}
                   </Badge>
                 </div>
               </div>
@@ -396,11 +386,8 @@ export default function DashboardLayout({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-9 w-9 relative">
+                      <Button variant="ghost" size="icon" className="h-9 w-9">
                         <Bell size={18} />
-                        {unreadCount > 0 && (
-                          <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse" />
-                        )}
                       </Button>
                     </DropdownMenuTrigger>
                   </TooltipTrigger>
@@ -409,22 +396,9 @@ export default function DashboardLayout({
                 <DropdownMenuContent align="end" className="w-80">
                   <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {notifications.map((n) => (
-                    <DropdownMenuItem
-                      key={n.id}
-                      className="flex flex-col items-start gap-1 p-3 cursor-pointer"
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <span className="text-sm font-medium">{n.title}</span>
-                        {!n.read && (
-                          <span className="h-2 w-2 rounded-full bg-primary ml-auto" />
-                        )}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {n.message}
-                      </span>
-                    </DropdownMenuItem>
-                  ))}
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No new notifications
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -467,7 +441,7 @@ export default function DashboardLayout({
                     className="text-destructive focus:text-destructive"
                     onClick={async () => {
                       await signOut({ redirect: false })
-                      router.push('/login')
+                      window.location.href = '/login'
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />

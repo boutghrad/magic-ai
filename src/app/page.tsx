@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Sparkles, Brain, Atom, Calculator, BookOpen, GraduationCap,
   Zap, BarChart3, Calendar, Sun, Moon, Menu, X, ChevronRight,
-  Star, Quote, ArrowRight, Check, Shield, Users, Trophy
+  Check, Shield, ArrowRight
 } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -73,34 +74,6 @@ const features = [
   }
 ]
 
-const stats = [
-  { value: '50K+', label: 'Active Students', icon: Users },
-  { value: '1M+', label: 'Questions Answered', icon: Zap },
-  { value: '4.9', label: 'Average Rating', icon: Star },
-  { value: '100+', label: 'Subjects Covered', icon: Trophy }
-]
-
-const testimonials = [
-  {
-    name: 'Sarah Chen',
-    role: 'Computer Science Student',
-    text: 'Magic AI transformed how I study. The step-by-step math solutions are incredibly clear, and the quiz generator helps me prepare for exams efficiently.',
-    avatar: 'SC'
-  },
-  {
-    name: 'James Rodriguez',
-    role: 'Physics Major',
-    text: 'The science tutor is like having a personal professor available 24/7. It explains complex concepts with real-world examples that actually make sense.',
-    avatar: 'JR'
-  },
-  {
-    name: 'Emily Watson',
-    role: 'High School Student',
-    text: 'I went from struggling with chemistry to acing my exams. The homework helper and study planner kept me organized and on track all semester.',
-    avatar: 'EW'
-  }
-]
-
 const steps = [
   { number: '01', title: 'Ask', description: 'Type your question, upload homework, or pick a topic. Our AI understands any subject.', icon: Sparkles },
   { number: '02', title: 'Learn', description: 'Get step-by-step explanations, examples, and practice problems tailored to your level.', icon: BookOpen },
@@ -124,8 +97,8 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <Link href="/" className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg magic-gradient flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-white" />
+              <div className="h-8 w-8 rounded-lg overflow-hidden">
+                <Image src="/logo.svg" alt="Magic AI" width={32} height={32} className="w-full h-full object-cover" />
               </div>
               <span className="text-xl font-bold magic-text">Magic AI</span>
             </Link>
@@ -252,20 +225,7 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Trust indicators */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-16 flex items-center justify-center gap-8 text-sm text-muted-foreground"
-          >
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />)}
-              <span className="ml-1">4.9 Rating</span>
-            </div>
-            <div>50K+ Students</div>
-            <div className="hidden sm:block">Free to Start</div>
-          </motion.div>
+          </div>
         </div>
       </section>
 
@@ -325,60 +285,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass-card rounded-2xl p-8 sm:p-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, i) => (
-                <motion.div key={i} initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="text-center">
-                  <stat.icon className="h-6 w-6 text-primary mx-auto mb-2" />
-                  <div className="text-3xl sm:text-4xl font-bold magic-text">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section id="about" className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeInUp} className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold">
-              Loved by <span className="magic-text">Students</span>
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">See what our students have to say about Magic AI.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.15 }}>
-                <Card className="h-full border-border/50">
-                  <CardContent className="pt-6">
-                    <Quote className="h-8 w-8 text-primary/30 mb-4" />
-                    <p className="text-sm leading-relaxed mb-6 text-muted-foreground">&ldquo;{t.text}&rdquo;</p>
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full magic-gradient flex items-center justify-center text-white text-sm font-bold">
-                        {t.avatar}
-                      </div>
-                      <div>
-                        <div className="font-medium text-sm">{t.name}</div>
-                        <div className="text-xs text-muted-foreground">{t.role}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-0.5 mt-3">
-                      {[...Array(5)].map((_, j) => <Star key={j} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -411,11 +317,11 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border py-16 bg-muted/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-lg magic-gradient flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-white" />
+                <div className="h-8 w-8 rounded-lg overflow-hidden">
+                  <Image src="/logo.svg" alt="Magic AI" width={32} height={32} className="w-full h-full object-cover" />
                 </div>
                 <span className="text-lg font-bold magic-text">Magic AI</span>
               </div>
@@ -433,32 +339,19 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold text-sm mb-4">Resources</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="hover:text-foreground transition-colors cursor-pointer">Documentation</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Blog</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Tutorials</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">API</div>
+                <Link href="/homework" className="block hover:text-foreground transition-colors">Homework Help</Link>
+                <Link href="/study-planner" className="block hover:text-foreground transition-colors">Study Planner</Link>
               </div>
             </div>
             <div>
               <h4 className="font-semibold text-sm mb-4">Company</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="hover:text-foreground transition-colors cursor-pointer">About</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Careers</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Contact</div>
                 <Link href="/admin" className="block hover:text-foreground transition-colors">Admin</Link>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm mb-4">Legal</h4>
-              <div className="space-y-2 text-sm text-muted-foreground">
-                <div className="hover:text-foreground transition-colors cursor-pointer">Privacy</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Terms</div>
-                <div className="hover:text-foreground transition-colors cursor-pointer">Cookie Policy</div>
               </div>
             </div>
           </div>
           <div className="border-t border-border mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">&copy; 2024 Magic AI. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} Magic AI. All rights reserved.</p>
             <div className="flex items-center gap-4 text-muted-foreground">
               <Shield className="h-4 w-4" />
               <span className="text-xs">SOC 2 Compliant</span>

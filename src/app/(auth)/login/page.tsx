@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useTheme } from 'next-themes'
 import { motion } from 'framer-motion'
 import {
@@ -17,6 +17,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -78,35 +79,20 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        console.error('Login error:', result.error)
         setError(result.error === 'CredentialsSignin'
           ? 'Invalid email or password'
           : result.error)
+        setIsLoading(false)
       } else if (result?.ok) {
-        // Poll for session to be established (max 5 attempts)
-        let sessionEstablished = false
-        for (let i = 0; i < 5; i++) {
-          await new Promise((resolve) => setTimeout(resolve, 400))
-          const session = await getSession()
-          if (session) {
-            sessionEstablished = true
-            break
-          }
-        }
-
-        if (sessionEstablished) {
-          router.push('/dashboard')
-          router.refresh()
-        } else {
-          // Force a page reload to pick up the session cookie
-          window.location.href = '/dashboard'
-        }
+        // Use window.location.href for a full page reload
+        // This is the most reliable way to establish the session in serverless environments
+        window.location.href = '/dashboard'
       } else {
         setError('Sign in failed. Please try again.')
+        setIsLoading(false)
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')
-    } finally {
       setIsLoading(false)
     }
   }
@@ -161,8 +147,15 @@ export default function LoginPage() {
               className="flex flex-col items-center gap-3"
             >
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl magic-gradient flex items-center justify-center shadow-lg shadow-purple-500/25">
-                  <Sparkles className="w-7 h-7 text-white" />
+                <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg shadow-purple-500/25">
+                  <Image
+                    src="/logo.svg"
+                    alt="Magic AI"
+                    width={56}
+                    height={56}
+                    className="w-full h-full object-cover"
+                    priority
+                  />
                 </div>
                 <div className="absolute -inset-1 rounded-2xl magic-gradient opacity-30 blur-md -z-10" />
               </div>
@@ -231,12 +224,6 @@ export default function LoginPage() {
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
-                  <Link
-                    href="#"
-                    className="text-xs text-muted-foreground hover:text-purple-500 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
